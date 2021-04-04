@@ -1,3 +1,17 @@
+// Package classification of Product API
+//
+// Documentation for Product API
+//
+//		Schemes: http
+//		BasePath: /
+//		Version: 1.0.0
+//
+//		Consumes:
+//		- application/json
+//
+//		Produces:
+//		- application/json
+// swagger:meta
 package handlers
 
 import (
@@ -5,11 +19,29 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/girisub/product-api/data"
-	"github.com/gorilla/mux"
 )
+
+// A list of products returns in the response
+// swagger:response productsResponse
+type productsResponse struct {
+	// All products in the system
+	// in: body
+	Body []data.Product
+}
+
+// swagger:response noContent
+type prodcutsNoContent struct {
+}
+
+// swagger:parameters deletProduct
+type productIDParameterWrapper struct {
+	// The id of the product to delete from database
+	// in: path
+	// required: true
+	ID int `json:"id"`
+}
 
 type Products struct {
 	l *log.Logger
@@ -17,47 +49,6 @@ type Products struct {
 
 func NewProducts(l *log.Logger) *Products {
 	return &Products{l}
-}
-
-func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handling GET req")
-	lp := data.GetProducts()
-	err := lp.ToJSON(rw)
-	if err != nil {
-		http.Error(rw, "Unable to marshal object", http.StatusInternalServerError)
-	}
-}
-
-func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handling POST req")
-
-	prod := r.Context().Value(KeyProduct{}).(data.Product)
-	data.AddProduct(&prod)
-}
-
-func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(rw, "Unable to convert id", http.StatusBadRequest)
-	}
-
-	p.l.Println("Handling PUT req")
-	prod := r.Context().Value(KeyProduct{}).(data.Product)
-
-	err = data.UpdateProduct(id, &prod)
-	if err == data.ErrorProductNotFound {
-		http.Error(rw, data.ErrorProductNotFound.Error(), http.StatusNotFound)
-		return
-	}
-
-	if err != nil {
-		http.Error(rw, "Product not found", http.StatusInternalServerError)
-		return
-	}
-
-	return
 }
 
 type KeyProduct struct{}
